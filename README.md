@@ -1,6 +1,6 @@
 # Motivnavi OSへようこそ（motivnavi）
 
-Motivnavi OSのウェルカムアプリです。OSの紹介や、タブレットを車に設置する方法を表示します。また、Linux Auto・Mediablue・Castify・Motivnavi Updaterを起動できます。
+Motivnavi OSのウェルカムアプリです。OSの紹介や、タブレットを車に設置する方法を表示します。また、Linux Auto・Mediablue・Castify・Motivnavi Screentweaks・Motivnavi Updaterを起動できます。
 
 ## ビルドとインストール
 
@@ -26,13 +26,14 @@ motivnavi                       # 起動（アプリメニューの「Motivnavi 
 
 ## ボタンと実行されるコマンド
 
-`src/motivnavi.py` の `ACTIONS` に登録されたコマンドだけを実行します。画面側からは操作IDだけが送られるので、任意のコマンドが実行されることはありません。
+`src/motivnavi.py` の `ACTIONS` に登録されたコマンドだけを実行します（7種類）。画面側からは操作IDだけが送られるので、任意のコマンドが実行されることはありません。
 
 | ボタン | コマンド |
 |---|---|
 | Android Autoを使う | `linux-auto` |
 | Bluetoothで音声を再生する・通話をする | `mediablue` |
 | インターネットラジオを聞く | `/snap/bin/chromium --app=https://castify.enoki.xyz/ --no-first-run` |
+| カーナビ向けに画面を設定する | `motivnavi-screentweaks` |
 | Motivnavi OS公式ホームページ | `/snap/bin/chromium --app=https://motivnavi.enoki.xyz/ --no-first-run` |
 | 製作者情報 → ホームページを開く | `/snap/bin/chromium --app=https://enoki.xyz/ --no-first-run` |
 | アップデートを確認 | `motivnavi-updater` |

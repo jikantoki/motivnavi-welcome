@@ -40,6 +40,10 @@ ACTIONS = {
         "name": "Castify",
         "cmd": [CHROMIUM, "--app=https://castify.enoki.xyz/", "--no-first-run"],
     },
+    "screentweaks": {
+        "name": "Motivnavi Screentweaks",
+        "cmd": ["motivnavi-screentweaks"],
+    },
     "homepage": {
         "name": "Motivnavi OS公式ホームページ",
         "cmd": [CHROMIUM, "--app=https://motivnavi.enoki.xyz/", "--no-first-run"],
@@ -171,6 +175,12 @@ class WelcomeApp(Gtk.Application):
                 None,
             )
         )
+
+        # 画面ファイルはローカルなのでキャッシュ不要（アップデート後に古い画面が出ないように）
+        try:
+            WebKit.WebContext.get_default().set_cache_model(WebKit.CacheModel.DOCUMENT_VIEWER)
+        except (AttributeError, TypeError):
+            pass
 
         webview = WebKit.WebView(user_content_manager=manager)
         settings = webview.get_settings()

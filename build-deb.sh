@@ -72,7 +72,8 @@ Homepage: https://motivnavi.enoki.xyz/
 Description: Motivnavi OSへようこそ
  Motivnavi OSのウェルカムアプリです。OSの紹介、タブレットの車への
  設置方法を表示し、Linux Auto (Android Auto)、Mediablue (Bluetooth)、
- Castify (インターネットラジオ)、Motivnavi Updater を起動できます。
+ Castify (インターネットラジオ)、Motivnavi Screentweaks (画面設定)、
+ Motivnavi Updater を起動できます。
 EOF
 
 # --- ビルド -------------------------------------------------------------
