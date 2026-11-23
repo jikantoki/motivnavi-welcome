@@ -1,0 +1,3 @@
+#!/bin/sh
+# Motivnavi OSへようこそ
+exec /usr/bin/python3 /usr/share/motivnavi/motivnavi.py "$@"

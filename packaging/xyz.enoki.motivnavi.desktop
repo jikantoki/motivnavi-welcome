@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Motivnavi OSへようこそ
+Name[en]=Welcome to Motivnavi OS
+GenericName=ようこそ
+Comment=Motivnavi OSの紹介と、カーナビ機能の入り口
+Exec=motivnavi
+Icon=motivnavi
+Terminal=false
+Categories=Utility;System;
+Keywords=Motivnavi;Welcome;ようこそ;カーナビ;Android Auto;Bluetooth;ラジオ;
+StartupNotify=true
+StartupWMClass=motivnavi
+SingleMainWindow=true

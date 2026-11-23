@@ -1,0 +1,9 @@
+# Linuxで実行するスクリプトは改行コードをLFに固定（Windowsでgit操作しても壊れないように）
+*.sh text eol=lf
+*.py text eol=lf
+*.desktop text eol=lf
+packaging/motivnavi text eol=lf
+VERSION text eol=lf
+*.png binary
+*.jpg binary
+*.deb binary
