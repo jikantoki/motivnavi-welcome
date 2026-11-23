@@ -12,6 +12,7 @@ GTK + WebKitGTK で独立したウィンドウを開き、web/ 以下の HTML/CS
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -58,6 +59,13 @@ ACTIONS = {
     },
 }
 
+# 画面倍率の補正
+#   OSの拡大率（125%・150%など）を打ち消し、CSSの1pxを画面の物理1ピクセルに合わせる。
+#   つまり150%の端末でも100%の端末と同じレイアウトで表示する。
+#   物理解像度がこれより大きい画面では、この幅（px）相当で表示する。
+DRM_DIR = "/sys/class/drm"
+MAX_LAYOUT_WIDTH = 1920
+
 # 同じボタンの連打で二重起動しないための間隔（秒）
 LAUNCH_COOLDOWN = 3.0
 
@@ -102,6 +110,48 @@ def read_version():
             return f.read().strip()
     except OSError:
         return "dev"
+
+
+def native_panel_size(connector_hint=None):
+    """接続中ディスプレイの物理解像度 (幅, 高さ) を返す。分からなければ None。
+
+    /sys/class/drm/<card>-<コネクタ>/modes の先頭行（推奨解像度）を読む。
+    GTKが教えてくれたコネクタ名に一致するもの → 内蔵パネル(eDP/LVDS/DSI) → その他 の順で選ぶ。
+    """
+    try:
+        names = sorted(os.listdir(DRM_DIR))
+    except OSError:
+        return None
+
+    candidates = []
+    for name in names:
+        if "-" not in name:
+            continue
+        base = os.path.join(DRM_DIR, name)
+        try:
+            with open(os.path.join(base, "status"), encoding="ascii") as f:
+                if f.read().strip() != "connected":
+                    continue
+            with open(os.path.join(base, "modes"), encoding="ascii") as f:
+                first = f.readline().strip()
+        except (OSError, UnicodeDecodeError):
+            continue
+        m = re.match(r"(\d+)x(\d+)", first)
+        if not m:
+            continue
+        connector = name.split("-", 1)[1]  # card1-eDP-1 → eDP-1
+        if connector_hint and connector == connector_hint:
+            rank = 0
+        elif connector.startswith(("eDP", "LVDS", "DSI")):
+            rank = 1
+        else:
+            rank = 2
+        candidates.append((rank, int(m.group(1)), int(m.group(2))))
+
+    if not candidates:
+        return None
+    candidates.sort(key=lambda c: c[0])
+    return candidates[0][1], candidates[0][2]
 
 
 def launch(action_id):
@@ -198,6 +248,10 @@ class WelcomeApp(Gtk.Application):
         webview.connect("context-menu", lambda *_: True)  # 長押しメニューを出さない
         webview.load_uri(GLib.filename_to_uri(os.path.join(WEB_DIR, "index.html"), None))
 
+        # 表示されてモニターが決まったら倍率を合わせる（モニターの倍率が変わったときも）
+        win.connect("map", lambda *_: GLib.idle_add(self.apply_zoom))
+        win.connect("notify::scale-factor", lambda *_: GLib.idle_add(self.apply_zoom))
+
         if GTK4:
             win.set_child(webview)
         else:
@@ -208,6 +262,49 @@ class WelcomeApp(Gtk.Application):
 
         self.window = win
         self.webview = webview
+
+    # ---- 画面倍率の補正 ---------------------------------------------------
+    def compute_zoom(self):
+        override = os.environ.get("MOTIVNAVI_ZOOM")
+        if override:
+            try:
+                return min(max(float(override), 0.25), 4.0)
+            except ValueError:
+                pass
+
+        display = Gdk.Display.get_default()
+        monitor = None
+        try:
+            if GTK4:
+                surface = self.window.get_surface()
+                monitor = display.get_monitor_at_surface(surface) if surface else None
+            else:
+                gdk_window = self.window.get_window()
+                monitor = display.get_monitor_at_window(gdk_window) if gdk_window else None
+        except (AttributeError, TypeError):
+            monitor = None
+        if monitor is None:
+            return 1.0
+
+        geometry = monitor.get_geometry()  # GTKから見た（拡大率適用後の）サイズ
+        logical = max(geometry.width, geometry.height)
+        native = native_panel_size(monitor.get_model())
+        physical = max(native) if native else logical * monitor.get_scale_factor()
+        if logical <= 0 or physical <= 0:
+            return 1.0
+
+        zoom = logical / min(physical, MAX_LAYOUT_WIDTH)
+        return min(max(zoom, 0.25), 1.0)
+
+    def apply_zoom(self):
+        if self.webview is None or self.window is None:
+            return False
+        zoom = self.compute_zoom()
+        if abs(self.webview.get_zoom_level() - zoom) > 0.001:
+            self.webview.set_zoom_level(zoom)
+        if os.environ.get("MOTIVNAVI_DEBUG"):
+            print(f"[motivnavi] zoom = {zoom:.3f}", flush=True)
+        return False
 
     # ---- 画面外への移動を禁止（アプリ内ページのみ表示） -------------------
     def on_decide_policy(self, webview, decision, decision_type):

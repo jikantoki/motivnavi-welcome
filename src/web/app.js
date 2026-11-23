@@ -15,6 +15,17 @@
   const lightbox = document.querySelector(".lightbox");
   const lightboxImg = lightbox.querySelector("img");
 
+  /* ---------- 画面サイズ（vw/vh の代わり） ----------
+     WebKitGTK は拡大率(ズーム)を変えると vw/vh の計算がずれるため、
+     実際の表示サイズから 1% の長さを CSS 変数 --vw / --vh に入れて使う。 */
+  function updateViewportUnits() {
+    const root = document.documentElement.style;
+    root.setProperty("--vw", window.innerWidth / 100 + "px");
+    root.setProperty("--vh", window.innerHeight / 100 + "px");
+  }
+  updateViewportUnits();
+  window.addEventListener("resize", updateViewportUnits);
+
   /* ---------- 画面切り替え ---------- */
   function show(name) {
     if (!views.has(name)) name = "home";
